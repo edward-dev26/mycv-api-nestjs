@@ -7,8 +7,7 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { UsersModule } from './users/users.module';
 import { ReportsModule } from './reports/reports.module';
-import { User } from './users/user.entity';
-import { Report } from './reports/report.entity';
+import dbConfig from './db/db.config';
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const cookieSession = require('cookie-session');
@@ -21,17 +20,7 @@ const cookieSession = require('cookie-session');
     }),
     UsersModule,
     ReportsModule,
-    TypeOrmModule.forRootAsync({
-      inject: [ConfigService],
-      useFactory(config: ConfigService) {
-        return {
-          type: 'sqlite',
-          database: config.get('DB_NAME'),
-          entities: [User, Report],
-          synchronize: true,
-        };
-      },
-    }),
+    TypeOrmModule.forRoot(dbConfig),
   ],
   controllers: [AppController],
   providers: [
@@ -45,13 +34,17 @@ const cookieSession = require('cookie-session');
   ],
 })
 export class AppModule {
+  constructor(private configService: ConfigService) {}
+
   configure(consumer: MiddlewareConsumer) {
     consumer.apply(this.getCookieSession()).forRoutes('*');
   }
 
   private getCookieSession() {
+    const key = this.configService.get('COOKIE_KEY');
+
     return cookieSession({
-      keys: ['asdasdasd'],
+      keys: [key],
     });
   }
 }
